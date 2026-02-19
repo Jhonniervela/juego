@@ -3,161 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Súper Lector - Academia Interactiva</title>
+    <title>Súper Academia MEGA 5.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Andika&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --azul: #4A90E2; --verde: #47D16E; --naranja: #FF9F43; --rojo: #F25C5C; --fondo: #F0F4F8; }
-        body { font-family: 'Andika', sans-serif; background: var(--fondo); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        #app { background: white; width: 95%; max-width: 800px; padding: 30px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        :root {
+            --azul: #2980b9; --verde: #27ae60; --naranja: #f39c12; 
+            --rojo: #e74c3c; --purpura: #8e44ad; --rosa: #fd79a8; 
+            --cyan: #00cec9; --oro: #f1c40f; --fondo: #dfe6e9;
+        }
+        body { font-family: 'Andika', sans-serif; background: var(--fondo); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        #app { background: white; width: 95%; max-width: 1000px; height: 92vh; padding: 20px; border-radius: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.2); text-align: center; position: relative; display: flex; flex-direction: column; border: 5px solid white; box-sizing: border-box; }
         
-        /* Menú */
-        .menu-btn { padding: 20px; font-size: 24px; margin: 10px; border: none; border-radius: 20px; cursor: pointer; color: white; transition: 0.3s; width: 100%; max-width: 350px; font-weight: bold; }
-        .btn-abc { background: var(--naranja); box-shadow: 0 5px 0 #d35400; }
-        .btn-juego { background: var(--verde); box-shadow: 0 5px 0 #27ae60; }
-        .btn-abc:active, .btn-juego:active { transform: translateY(5px); box-shadow: none; }
+        .grid-menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px; overflow-y: auto; }
+        .btn-menu { padding: 15px; font-size: 16px; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
+        .btn-menu span { font-size: 35px; margin-bottom: 5px; }
+        .btn-menu:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Abecedario */
-        .grid-abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 12px; margin-top: 20px; }
-        .letra-card { background: white; border: 3px solid var(--azul); border-radius: 15px; padding: 15px; font-size: 35px; cursor: pointer; transition: 0.2s; font-weight: bold; color: var(--azul); }
-        .letra-card:hover { background: var(--azul); color: white; transform: scale(1.1); }
-        #ejemplo-visual { font-size: 30px; color: var(--naranja); height: 40px; margin: 10px 0; font-weight: bold; }
-
-        /* Juego */
-        .progreso-bar { width: 100%; height: 15px; background: #EEE; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
-        #progreso-fill { width: 0%; height: 100%; background: var(--verde); transition: 0.5s; }
-        .input-letra { width: 70px; height: 80px; border: 4px solid var(--azul); border-radius: 15px; text-align: center; font-size: 50px; text-transform: uppercase; outline: none; background: #f9f9f9; }
+        .hidden { display: none !important; }
         
-        .hidden { display: none; }
-        .btn-volver { margin-top: 25px; background: #95a5a6; color: white; border: none; padding: 12px 25px; border-radius: 15px; cursor: pointer; font-family: inherit; }
+        .grid-abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 10px; padding: 10px; overflow-y: auto; max-height: 450px; }
+        .letra-card { background: #fdfdfd; border: 3px solid var(--azul); border-radius: 15px; padding: 15px; font-size: 30px; cursor: pointer; color: var(--azul); font-weight: bold; }
+        .letra-card:hover { background: var(--azul); color: white; transform: scale(1.05); }
+
+        .input-mega { font-size: 50px; border: 5px solid var(--azul); border-radius: 25px; text-align: center; width: 70%; padding: 10px; outline: none; margin: 10px 0; background: #f1f2f6; }
+        .emoji-big { font-size: 100px; margin: 10px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-10px);} }
+
+        #arcade-container { width: 100%; flex-grow: 1; background: #2d3436; border-radius: 30px; position: relative; overflow: hidden; }
+        .burbuja { position: absolute; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: white; font-weight: bold; cursor: pointer; transition: 0.1s; }
+
+        .btn-volver { background: #636e72; color: white; border: none; padding: 12px 30px; border-radius: 50px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        
+        #modal-abc { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: scale(0); transition: 0.4s; border-radius: 40px; }
+        #modal-abc.active { transform: scale(1); }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <div id="menu">
-        <h1>🚀 ¡Hola! ¿Qué quieres aprender?</h1>
-        <p style="color: #7f8c8d;">(Haz clic en un botón para activar el sonido)</p>
-        <button class="menu-btn btn-abc" onclick="mostrarModulo('abc')">1. SONIDOS DEL ABECEDARIO</button>
-        <button class="menu-btn btn-juego" onclick="mostrarModulo('juego')">2. JUEGO DE PALABRAS</button>
+    <div id="view-menu">
+        <h1 style="color: var(--azul); margin: 5px;">🚀 MEGA ACADEMIA 5.0</h1>
+        <div class="grid-menu">
+            <button class="btn-menu" style="background:var(--naranja)" onclick="abrirABC()"><span>🅰️</span>1. ABECEDARIO</button>
+            <button class="btn-menu" style="background:var(--verde)" onclick="irJuego('completar')"><span>✏️</span>2. COMPLETAR</button>
+            <button class="btn-menu" style="background:var(--purpura)" onclick="irJuego('dictado')"><span>📝</span>3. DICTADO</button>
+            <button class="btn-menu" style="background:var(--rosa)" onclick="irJuego('lectura')"><span>⚡</span>4. LECTURA</button>
+            <button class="btn-menu" style="background:var(--cyan)" onclick="irJuego('comprension')"><span>🧠</span>5. COMPRENSIÓN</button>
+            <button class="btn-menu" style="background:var(--oro); color:#2d3436" onclick="iniciarArcade()"><span>🎮</span>6. BURBUJAS</button>
+        </div>
     </div>
 
-    <div id="modulo-abc" class="hidden">
-        <h2>Toca una letra para escuchar</h2>
-        <div id="ejemplo-visual"></div>
-        <div class="grid-abc" id="abc-container"></div>
-        <button class="btn-volver" onclick="irAlMenu()">⬅ Volver al menú</button>
+    <div id="view-abc" class="hidden">
+        <h2>Toca las letras</h2>
+        <div class="grid-abc" id="abc-grid"></div>
+        <button class="btn-volver" onclick="irMenu()">⬅ Volver</button>
+        <div id="modal-abc">
+            <div id="m-letra" style="font-size:150px; color:var(--azul); font-weight:bold;"></div>
+            <div id="m-emoji" style="font-size:100px;"></div>
+            <div id="m-texto" style="font-size:40px; color:var(--naranja); font-weight:bold;"></div>
+            <button class="btn-volver" onclick="cerrarABC()" style="background:var(--rojo); padding: 15px 40px;">CERRAR</button>
+        </div>
     </div>
 
-    <div id="modulo-juego" class="hidden">
-        <div class="progreso-bar"><div id="progreso-fill"></div></div>
-        <span id="juego-emoji" style="font-size: 100px;"></span>
-        <div id="juego-palabra" style="font-size: 60px; margin: 20px 0;"></div>
-        <button class="menu-btn btn-abc" style="width:auto;" onclick="hablarPalabra()">🔊 Escuchar pista</button>
-        <button class="menu-btn btn-juego" style="width:auto;" onclick="comprobar()">¡Comprobar!</button>
-        <div id="mensaje" style="font-size: 24px; font-weight: bold; margin-top: 15px;"></div>
-        <button class="btn-volver" onclick="irAlMenu()">⬅ Volver al menú</button>
+    <div id="view-game" class="hidden" style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div id="game-content"></div>
+        <button class="btn-volver" onclick="irMenu()">⬅ Volver</button>
+    </div>
+
+    <div id="view-arcade" class="hidden" style="flex-grow:1; display:flex; flex-direction:column;">
+        <div style="font-size: 24px; font-weight: bold; color: var(--azul);">Puntos: <span id="pts">0</span> | Vidas: <span id="vidas">3</span></div>
+        <div id="arcade-container"></div>
+        <button class="btn-volver" onclick="pararArcade()">⬅ Salir</button>
     </div>
 </div>
 
 <script>
-    const diccionarioABC = {
-        'A': 'Avión', 'B': 'Barco', 'C': 'Casa', 'D': 'Dedo', 'E': 'Elefante', 
-        'F': 'Flor', 'G': 'Gato', 'H': 'Helado', 'I': 'Isla', 'J': 'Jirafa', 
-        'K': 'Kilo', 'L': 'Luna', 'M': 'Mamá', 'N': 'Nene', 'Ñ': 'Ñandú', 
-        'O': 'Oso', 'P': 'Papá', 'Q': 'Queso', 'R': 'Rana', 'S': 'Sol', 
-        'T': 'Tren', 'U': 'Uva', 'V': 'Vaca', 'W': 'Waffle', 'X': 'Xilófono', 
-        'Y': 'Yoyo', 'Z': 'Zapato'
+    const datosABC = {
+        'A':['Avión','✈️'],'B':['Ballena','🐋'],'C':['Cebra','🦓'],'D':['Delfín','🐬'],'E':['Elefante','🐘'],
+        'F':['Foca','🦭'],'G':['Gato','🐱'],'H':['Helado','🍦'],'I':['Iguana','🦎'],'J':['Jirafa','🦒'],
+        'K':['Koala','🐨'],'L':['León','🦁'],'M':['Mariposa','🦋'],'N':['Naranja','🍊'],'Ñ':['Ñandú','🐦'],
+        'O':['Oveja','🐑'],'P':['Perro','🐶'],'Q':['Queso','🧀'],'R':['Ratón','🐭'],'S':['Serpiente','🐍'],
+        'T':['Tigre','🐯'],'U':['Unicornio','🦄'],'V':['Vaca','🐄'],'W':['Waffle','🧇'],'X':['Xilófono','🎹'],
+        'Y':['Yate','🛥️'],'Z':['Zorro','🦊']
     };
 
-    const niveles = [
-        { p: "_AMA", r: "M", f: "Mamá", e: "👩‍👦" },
-        { p: "MA_O", r: "N", f: "Mano", e: "🖐️" },
-        { p: "_ENE", r: "N", f: "Nene", e: "👶" },
-        { p: "MO_O", r: "N", f: "Mono", e: "🐒" },
-        { p: "_APA", r: "M", f: "Mapa", e: "🗺️" }
+    const nivelesComp = [
+        {f:"MAMA", e:"👩‍👦", p:"_AMA", r:"M"}, {f:"PATO", e:"🦆", p:"PA_O", r:"T"},
+        {f:"LUNA", e:"🌙", p:"_UNA", r:"L"}, {f:"NENE", e:"👶", p:"NE_E", r:"N"},
+        {f:"SAPO", e:"🐸", p:"SA_O", r:"P"}, {f:"DADO", e:"🎲", p:"DA_O", r:"D"},
+        {f:"GATO", e:"🐱", p:"_ATO", r:"G"}, {f:"ROSA", e:"🌹", p:"R_SA", r:"O"}
     ];
 
-    let nivelActual = 0;
+    const nivelesLectura = [
+        {t: "EL SOL", s: "EL SOL ES AMARILLO Y CALIENTE"},
+        {t: "MI GATO", s: "MI GATO ES MUY PEQUEÑO Y LINDO"},
+        {t: "LA VACA", s: "LA VACA NOS DA LECHE RICA"},
+        {t: "EL MAR", s: "EL MAR TIENE MUCHOS PECES AZULES"}
+    ];
 
-    // FUNCIÓN PARA HABLAR (CORREGIDA)
-    function decirTexto(texto) {
-        window.speechSynthesis.cancel(); // Detiene cualquier voz anterior
-        const msg = new SpeechSynthesisUtterance();
-        msg.text = texto;
-        msg.lang = 'es-ES'; // Español
-        msg.rate = 0.8; // Velocidad pausada
-        msg.volume = 1; // Volumen máximo
-        window.speechSynthesis.speak(msg);
+    const nivelesEntender = [
+        {f: "El mono come banana", o: ["🐘", "🐒", "🦒"], c: "🐒"},
+        {f: "Me gusta comer helado", o: ["🍦", "🥦", "🪨"], c: "🍦"},
+        {f: "El pájaro vuela en el cielo", o: ["🐟", "🐦", "🐢"], c: "🐦"},
+        {f: "La rana salta en el agua", o: ["🦁", "🐸", "🐻"], c: "🐸"}
+    ];
+
+    let lvl = 0; let pts = 0; let arcadeActivo = false; let vidas = 3;
+
+    function decir(t) { window.speechSynthesis.cancel(); const m = new SpeechSynthesisUtterance(t); m.lang='es-ES'; m.rate=0.85; window.speechSynthesis.speak(m); }
+
+    function irMenu() { 
+        arcadeActivo = false; lvl = 0;
+        document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
+        document.getElementById('view-menu').classList.remove('hidden');
     }
 
-    function mostrarModulo(tipo) {
-        // Al hacer clic aquí, el navegador ya nos permite usar sonido
-        decirTexto("¡Vamos!"); 
-        document.getElementById('menu').classList.add('hidden');
-        if(tipo === 'abc') {
-            document.getElementById('modulo-abc').classList.remove('hidden');
-            generarABC();
-        } else {
-            document.getElementById('modulo-juego').classList.remove('hidden');
-            cargarJuego();
-        }
-    }
-
-    function irAlMenu() {
-        document.getElementById('modulo-abc').classList.add('hidden');
-        document.getElementById('modulo-juego').classList.add('hidden');
-        document.getElementById('menu').classList.remove('hidden');
-    }
-
-    function generarABC() {
-        const container = document.getElementById('abc-container');
-        container.innerHTML = "";
-        Object.keys(diccionarioABC).forEach(letra => {
-            const div = document.createElement('div');
-            div.className = "letra-card";
-            div.innerText = letra;
-            div.onclick = () => {
-                const palabra = diccionarioABC[letra];
-                document.getElementById('ejemplo-visual').innerText = letra + " de " + palabra;
-                decirTexto(letra + "... de " + palabra);
+    function abrirABC() {
+        document.getElementById('view-menu').classList.add('hidden');
+        document.getElementById('view-abc').classList.remove('hidden');
+        const g = document.getElementById('abc-grid'); g.innerHTML = "";
+        Object.keys(datosABC).forEach(l => {
+            const b = document.createElement('div'); b.className="letra-card"; b.innerText=l;
+            b.onclick = () => {
+                document.getElementById('m-letra').innerText = l;
+                document.getElementById('m-emoji').innerText = datosABC[l][1];
+                document.getElementById('m-texto').innerText = l + " de " + datosABC[l][0].toUpperCase();
+                document.getElementById('modal-abc').classList.add('active');
+                decir(l + "... de... " + datosABC[l][0]);
+                confetti();
             };
-            container.appendChild(div);
+            g.appendChild(b);
         });
+        decir("Toca las letras para aprender.");
+    }
+    function cerrarABC() { document.getElementById('modal-abc').classList.remove('active'); }
+
+    function irJuego(t) {
+        lvl = 0; // Resetear nivel al entrar
+        document.getElementById('view-menu').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        renderJuego(t);
     }
 
-    function cargarJuego() {
-        if(nivelActual >= niveles.length) {
-            document.getElementById('modulo-juego').innerHTML = "<h1>🏆 ¡Eres un Campeón!</h1><button class='menu-btn btn-juego' onclick='location.reload()'>¿Jugar otra vez?</button>";
-            decirTexto("¡Felicidades! Eres un campeón.");
-            return;
+    function renderJuego(t) {
+        const cont = document.getElementById('game-content');
+        cont.innerHTML = "";
+        
+        if(t === 'completar') {
+            if(lvl >= nivelesComp.length) return fin();
+            const n = nivelesComp[lvl];
+            cont.innerHTML = `<div class="emoji-big">${n.e}</div><div style="font-size:50px">${n.p.replace('_','<input id="in" class="input-mega" style="width:80px" maxlength="1">')}</div><button class="btn-menu" style="background:var(--verde); width:auto; display:inline;" onclick="checkC()">¡LISTO!</button>`;
+            decir("¿Qué letra falta?");
         }
-        const n = niveles[nivelActual];
-        document.getElementById('juego-emoji').innerText = n.e;
-        document.getElementById('progreso-fill').style.width = (nivelActual/niveles.length)*100 + "%";
-        document.getElementById('juego-palabra').innerHTML = n.p.replace('_', `<input type="text" maxlength="1" id="in-letra" class="input-letra" autocomplete="off">`);
-        document.getElementById('mensaje').innerText = "";
-        document.getElementById('in-letra').focus();
-    }
-
-    function hablarPalabra() {
-        decirTexto(niveles[nivelActual].f);
-    }
-
-    function comprobar() {
-        const res = document.getElementById('in-letra').value.toUpperCase();
-        if(res === niveles[nivelActual].r) {
-            document.getElementById('mensaje').innerText = "¡SÚPER BIEN! 🎉";
-            document.getElementById('mensaje').style.color = "var(--verde)";
-            decirTexto("¡Muy bien!");
-            nivelActual++;
-            setTimeout(cargarJuego, 1000);
-        } else {
-            document.getElementById('mensaje').innerText = "¡Casi! Intenta de nuevo 💪";
-            document.getElementById('mensaje').style.color = "var(--rojo)";
-            decirTexto("Intenta otra vez");
-            document.getElementById('in-letra').value = "";
+        else if(t === 'dictado') {
+            if(lvl >= nivelesComp.length) return fin();
+            const n = nivelesComp[lvl];
+            cont.innerHTML = `<div class="emoji-big">${n.e}</div><input id="in-d" class="input-mega" placeholder="Escribe..."><br><button class="btn-menu" style="background:var(--purpura); width:auto; display:inline;" onclick="decir('${n.f}')">🔊 OIR</button> <button class="btn-menu" style="background:var(--verde); width:auto; display:inline;" onclick="checkD()">LISTO</button>`;
+            decir("Escribe la palabra " + n.f);
+        }
+        else if(t === 'lectura') {
+            if(lvl >= nivelesLectura.length) return fin();
+            const n = nivelesLectura[lvl];
+            cont.innerHTML = `<h2 style="color:var(--rosa)">${n.t}</h2><div style="font-size:30px; background:#fff; padding:20px; border-radius:20px; cursor:pointer;" onclick="decir('${n.s}')">${n.s}</div><button class="btn-menu" style="background:var(--rosa); width:auto; display:inline; margin-top:10px;" onclick="lvl++; renderJuego('lectura'); confetti();">SIGUIENTE ✅</button>`;
+            decir("Lee esta frase muy fuerte.");
+        }
+        else if(t === 'comprension') {
+            if(lvl >= nivelesEntender.length) return fin();
+            const n = nivelesEntender[lvl];
+            let opcionesHTML = n.o.map(o => `<span style="font-size:80px; cursor:pointer; margin:10px;" onclick="checkE('${o}','${n.c}')">${o}</span>`).join('');
+            cont.innerHTML = `<h2 style="font-size:30px">${n.f}</h2><div>${opcionesHTML}</div><button class="btn-menu" style="background:var(--cyan); width:auto; display:inline;" onclick="decir('${n.f}')">🔊 OIR</button>`;
+            decir("Busca el dibujo de la oración.");
         }
     }
+
+    function checkC() { if(document.getElementById('in').value.toUpperCase() === nivelesComp[lvl].r) { lvl++; renderJuego('completar'); confetti(); decir("¡Muy bien!"); } else decir("Casi, intenta otra vez"); }
+    function checkD() { if(document.getElementById('in-d').value.toUpperCase() === nivelesComp[lvl].f) { lvl++; renderJuego('dictado'); confetti(); decir("¡Genio!"); } else decir("Escucha de nuevo"); }
+    function checkE(o, c) { if(o === c) { lvl++; renderJuego('comprension'); confetti(); decir("¡Correcto!"); } else decir("Ese no es"); }
+    function fin() { document.getElementById('game-content').innerHTML = "<h1>🏆 ¡ERES UN SÚPER EXPERTO!</h1>"; decir("¡Felicidades! Lo lograste."); }
+
+    function iniciarArcade() {
+        irMenu();
+        document.getElementById('view-menu').classList.add('hidden');
+        document.getElementById('view-arcade').classList.remove('hidden');
+        pts = 0; vidas = 3; arcadeActivo = true;
+        actualizarArcade();
+        bucleArcade();
+    }
+    function actualizarArcade() { document.getElementById('pts').innerText = pts; document.getElementById('vidas').innerText = vidas; }
+    function bucleArcade() {
+        if(!arcadeActivo) return;
+        const cont = document.getElementById('arcade-container');
+        const b = document.createElement('div');
+        const esBomba = Math.random() < 0.2;
+        b.className = "burbuja";
+        b.innerText = esBomba ? "💣" : "ABCDE"[Math.floor(Math.random()*5)];
+        b.style.left = Math.random() * (cont.offsetWidth - 70) + "px";
+        b.style.top = "-70px";
+        b.style.backgroundColor = esBomba ? "black" : `hsl(${Math.random()*360}, 70%, 50%)`;
+        cont.appendChild(b);
+
+        let t = -70;
+        const anim = setInterval(() => {
+            if(!arcadeActivo) { clearInterval(anim); return; }
+            t += 3 + (pts/10); b.style.top = t + "px";
+            if(t > cont.offsetHeight) {
+                clearInterval(anim); if(b.parentElement) cont.removeChild(b);
+                if(!esBomba && arcadeActivo) { /* Se puede penalizar si se desea */ }
+            }
+        }, 30);
+
+        b.onclick = () => {
+            if(esBomba) { decir("¡Oh no!"); vidas--; pts = Math.max(0, pts-5); }
+            else { decir(b.innerText); pts++; }
+            actualizarArcade();
+            clearInterval(anim); if(b.parentElement) cont.removeChild(b);
+            if(vidas <= 0) { decir("Fin del juego"); arcadeActivo = false; irMenu(); }
+        };
+        setTimeout(bucleArcade, 1200 - Math.min(pts*10, 800));
+    }
+    function pararArcade() { arcadeActivo = false; irMenu(); }
 </script>
 </body>
 </html>
