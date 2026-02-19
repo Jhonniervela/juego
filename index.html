@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Súper Lector - Academia Interactiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Andika&display=swap" rel="stylesheet">
+    <style>
+        :root { --azul: #4A90E2; --verde: #47D16E; --naranja: #FF9F43; --rojo: #F25C5C; --fondo: #F0F4F8; }
+        body { font-family: 'Andika', sans-serif; background: var(--fondo); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #app { background: white; width: 95%; max-width: 800px; padding: 30px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; }
+        
+        /* Menú */
+        .menu-btn { padding: 20px; font-size: 24px; margin: 10px; border: none; border-radius: 20px; cursor: pointer; color: white; transition: 0.3s; width: 100%; max-width: 350px; font-weight: bold; }
+        .btn-abc { background: var(--naranja); box-shadow: 0 5px 0 #d35400; }
+        .btn-juego { background: var(--verde); box-shadow: 0 5px 0 #27ae60; }
+        .btn-abc:active, .btn-juego:active { transform: translateY(5px); box-shadow: none; }
+
+        /* Abecedario */
+        .grid-abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 12px; margin-top: 20px; }
+        .letra-card { background: white; border: 3px solid var(--azul); border-radius: 15px; padding: 15px; font-size: 35px; cursor: pointer; transition: 0.2s; font-weight: bold; color: var(--azul); }
+        .letra-card:hover { background: var(--azul); color: white; transform: scale(1.1); }
+        #ejemplo-visual { font-size: 30px; color: var(--naranja); height: 40px; margin: 10px 0; font-weight: bold; }
+
+        /* Juego */
+        .progreso-bar { width: 100%; height: 15px; background: #EEE; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        #progreso-fill { width: 0%; height: 100%; background: var(--verde); transition: 0.5s; }
+        .input-letra { width: 70px; height: 80px; border: 4px solid var(--azul); border-radius: 15px; text-align: center; font-size: 50px; text-transform: uppercase; outline: none; background: #f9f9f9; }
+        
+        .hidden { display: none; }
+        .btn-volver { margin-top: 25px; background: #95a5a6; color: white; border: none; padding: 12px 25px; border-radius: 15px; cursor: pointer; font-family: inherit; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div id="menu">
+        <h1>🚀 ¡Hola! ¿Qué quieres aprender?</h1>
+        <p style="color: #7f8c8d;">(Haz clic en un botón para activar el sonido)</p>
+        <button class="menu-btn btn-abc" onclick="mostrarModulo('abc')">1. SONIDOS DEL ABECEDARIO</button>
+        <button class="menu-btn btn-juego" onclick="mostrarModulo('juego')">2. JUEGO DE PALABRAS</button>
+    </div>
+
+    <div id="modulo-abc" class="hidden">
+        <h2>Toca una letra para escuchar</h2>
+        <div id="ejemplo-visual"></div>
+        <div class="grid-abc" id="abc-container"></div>
+        <button class="btn-volver" onclick="irAlMenu()">⬅ Volver al menú</button>
+    </div>
+
+    <div id="modulo-juego" class="hidden">
+        <div class="progreso-bar"><div id="progreso-fill"></div></div>
+        <span id="juego-emoji" style="font-size: 100px;"></span>
+        <div id="juego-palabra" style="font-size: 60px; margin: 20px 0;"></div>
+        <button class="menu-btn btn-abc" style="width:auto;" onclick="hablarPalabra()">🔊 Escuchar pista</button>
+        <button class="menu-btn btn-juego" style="width:auto;" onclick="comprobar()">¡Comprobar!</button>
+        <div id="mensaje" style="font-size: 24px; font-weight: bold; margin-top: 15px;"></div>
+        <button class="btn-volver" onclick="irAlMenu()">⬅ Volver al menú</button>
+    </div>
+</div>
+
+<script>
+    const diccionarioABC = {
+        'A': 'Avión', 'B': 'Barco', 'C': 'Casa', 'D': 'Dedo', 'E': 'Elefante', 
+        'F': 'Flor', 'G': 'Gato', 'H': 'Helado', 'I': 'Isla', 'J': 'Jirafa', 
+        'K': 'Kilo', 'L': 'Luna', 'M': 'Mamá', 'N': 'Nene', 'Ñ': 'Ñandú', 
+        'O': 'Oso', 'P': 'Papá', 'Q': 'Queso', 'R': 'Rana', 'S': 'Sol', 
+        'T': 'Tren', 'U': 'Uva', 'V': 'Vaca', 'W': 'Waffle', 'X': 'Xilófono', 
+        'Y': 'Yoyo', 'Z': 'Zapato'
+    };
+
+    const niveles = [
+        { p: "_AMA", r: "M", f: "Mamá", e: "👩‍👦" },
+        { p: "MA_O", r: "N", f: "Mano", e: "🖐️" },
+        { p: "_ENE", r: "N", f: "Nene", e: "👶" },
+        { p: "MO_O", r: "N", f: "Mono", e: "🐒" },
+        { p: "_APA", r: "M", f: "Mapa", e: "🗺️" }
+    ];
+
+    let nivelActual = 0;
+
+    // FUNCIÓN PARA HABLAR (CORREGIDA)
+    function decirTexto(texto) {
+        window.speechSynthesis.cancel(); // Detiene cualquier voz anterior
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = texto;
+        msg.lang = 'es-ES'; // Español
+        msg.rate = 0.8; // Velocidad pausada
+        msg.volume = 1; // Volumen máximo
+        window.speechSynthesis.speak(msg);
+    }
+
+    function mostrarModulo(tipo) {
+        // Al hacer clic aquí, el navegador ya nos permite usar sonido
+        decirTexto("¡Vamos!"); 
+        document.getElementById('menu').classList.add('hidden');
+        if(tipo === 'abc') {
+            document.getElementById('modulo-abc').classList.remove('hidden');
+            generarABC();
+        } else {
+            document.getElementById('modulo-juego').classList.remove('hidden');
+            cargarJuego();
+        }
+    }
+
+    function irAlMenu() {
+        document.getElementById('modulo-abc').classList.add('hidden');
+        document.getElementById('modulo-juego').classList.add('hidden');
+        document.getElementById('menu').classList.remove('hidden');
+    }
+
+    function generarABC() {
+        const container = document.getElementById('abc-container');
+        container.innerHTML = "";
+        Object.keys(diccionarioABC).forEach(letra => {
+            const div = document.createElement('div');
+            div.className = "letra-card";
+            div.innerText = letra;
+            div.onclick = () => {
+                const palabra = diccionarioABC[letra];
+                document.getElementById('ejemplo-visual').innerText = letra + " de " + palabra;
+                decirTexto(letra + "... de " + palabra);
+            };
+            container.appendChild(div);
+        });
+    }
+
+    function cargarJuego() {
+        if(nivelActual >= niveles.length) {
+            document.getElementById('modulo-juego').innerHTML = "<h1>🏆 ¡Eres un Campeón!</h1><button class='menu-btn btn-juego' onclick='location.reload()'>¿Jugar otra vez?</button>";
+            decirTexto("¡Felicidades! Eres un campeón.");
+            return;
+        }
+        const n = niveles[nivelActual];
+        document.getElementById('juego-emoji').innerText = n.e;
+        document.getElementById('progreso-fill').style.width = (nivelActual/niveles.length)*100 + "%";
+        document.getElementById('juego-palabra').innerHTML = n.p.replace('_', `<input type="text" maxlength="1" id="in-letra" class="input-letra" autocomplete="off">`);
+        document.getElementById('mensaje').innerText = "";
+        document.getElementById('in-letra').focus();
+    }
+
+    function hablarPalabra() {
+        decirTexto(niveles[nivelActual].f);
+    }
+
+    function comprobar() {
+        const res = document.getElementById('in-letra').value.toUpperCase();
+        if(res === niveles[nivelActual].r) {
+            document.getElementById('mensaje').innerText = "¡SÚPER BIEN! 🎉";
+            document.getElementById('mensaje').style.color = "var(--verde)";
+            decirTexto("¡Muy bien!");
+            nivelActual++;
+            setTimeout(cargarJuego, 1000);
+        } else {
+            document.getElementById('mensaje').innerText = "¡Casi! Intenta de nuevo 💪";
+            document.getElementById('mensaje').style.color = "var(--rojo)";
+            decirTexto("Intenta otra vez");
+            document.getElementById('in-letra').value = "";
+        }
+    }
+</script>
+</body>
+</html>
